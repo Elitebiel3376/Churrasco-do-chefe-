@@ -1,681 +1,161 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Churrasco do Chefe — Atendimento</title>
-<meta name="theme-color" content="#ff6a00">
-
-<!-- ====== STYLES (tudo integrado) ====== -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Churrasco do Chefe - Atendimento</title>
 <style>
-  :root{
-    --bg:#0f0f10; --panel:#151516; --accent:#ff6a00; --accent-2:#ff8a2b; --muted:#bfbfbf;
-    --glass: rgba(255,255,255,0.03); --radius:12px;
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0; font-family:Inter,system-ui,Arial,Helvetica,sans-serif; background:var(--bg); color:#fff;
-    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
-  }
-
-  /* header */
-  header{
-    background: linear-gradient(90deg,var(--accent), var(--accent-2));
-    display:flex; align-items:center; gap:12px; padding:12px 16px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.3); position:sticky; top:0; z-index:50;
-  }
-  .logo { width:56px; height:56px; border-radius:10px; background:#fff; overflow:hidden; display:flex; align-items:center; justify-content:center; }
-  .logo img{width:100%; height:100%; object-fit:cover}
-  .title { font-weight:800; font-size:18px; line-height:1 }
-  .subtitle { font-size:12px; opacity:0.95; margin-top:2px }
-
-  .top-controls{margin-left:auto; display:flex; gap:8px; align-items:center}
-  .icon-btn{background:transparent; border:1px solid rgba(255,255,255,0.06); padding:8px; border-radius:8px; cursor:pointer; color:var(--muted); font-size:16px}
-
-  /* layout */
-  .container{ display:grid; grid-template-columns: 1fr 380px; gap:16px; padding:16px; max-width:1200px; margin:18px auto; }
-  @media (max-width:980px){ .container{ grid-template-columns: 1fr; padding:12px } }
-
-  /* panel chat */
-  .panel{ background:var(--panel); border-radius:var(--radius); padding:14px; min-height:60vh; box-shadow: 0 8px 30px rgba(0,0,0,0.45); display:flex; flex-direction:column; gap:12px; }
-  #chat{ height:48vh; overflow:auto; padding:12px; border-radius:8px; background: linear-gradient(180deg,var(--glass),transparent); }
-
-  /* bot avatar + messages */
-  .bot-line{ display:flex; align-items:flex-start; gap:8px; margin:10px 0; }
-  .bot-avatar{ width:36px; height:36px; border-radius:50%; background:var(--accent); color:#111; font-weight:900; display:flex; align-items:center; justify-content:center; }
-  .msg-bot{ display:inline-block; background:rgba(255,255,255,0.03); padding:10px 12px; border-radius:10px; border-left:4px solid var(--accent); max-width:85%; box-shadow:0 6px 18px rgba(0,0,0,0.25); }
-  .msg-user{ display:block; width:max-content; background:var(--accent); color:#111; padding:10px 12px; border-radius:10px; margin:8px 0 8px auto; max-width:85%; box-shadow:0 6px 18px rgba(0,0,0,0.15); }
-
-  /* typing */
-  #typing{ min-height:24px; }
-  .typing{ display:flex; gap:6px; margin:10px 0; align-items:center; }
-  .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent); animation:blink 1.4s infinite; opacity:.3; }
-  .dot:nth-child(2){ animation-delay:.15s } .dot:nth-child(3){ animation-delay:.3s }
-  @keyframes blink{ 0%{ opacity:.2 } 50%{ opacity:1 } 100%{ opacity:.2 } }
-
-  /* fade */
-  .fade-msg{ animation: fadeIn .32s ease }
-  @keyframes fadeIn { from{ opacity:0; transform:translateY(6px) } to{ opacity:1; transform:none } }
-
-  /* categories and items */
-  #categoria{ display:flex; gap:8px; flex-wrap:wrap; padding:8px 0; }
-  .cat-btn{ background:transparent; border:1px solid rgba(255,255,255,0.06); padding:10px 12px; border-radius:10px; cursor:pointer; transition:transform .12s; font-weight:700; color:var(--muted) }
-  .cat-btn:hover{ transform:translateY(-4px); box-shadow:0 6px 18px rgba(0,0,0,0.35) }
-  .item-btn{ display:block; margin:8px 0; padding:10px; border-radius:10px; border:none; background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#111; font-weight:800; cursor:pointer; width:100%; text-align:left }
-
-  /* chat input */
-  .chat-input{ display:flex; gap:8px; margin-top:6px }
-  .chat-input input{ flex:1; padding:12px; border-radius:10px; border:none; outline:none; background:rgba(255,255,255,0.04); color:inherit }
-  .chat-input button{ padding:12px 16px; border:none; border-radius:10px; background:var(--accent); color:#111; font-weight:900; cursor:pointer }
-
-  /* cart sidebar */
-  .cart{ background:var(--panel); border-radius:var(--radius); padding:12px; height:calc(60vh + 8px); display:flex; flex-direction:column; gap:10px; box-shadow: 0 8px 30px rgba(0,0,0,0.35) }
-  .cart h3{ margin:0 0 8px 0 }
-  .cart-list{ flex:1; overflow:auto; padding-right:6px; display:flex; flex-direction:column; gap:8px }
-  .cart-item{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px; border-radius:8px; background:rgba(255,255,255,0.02) }
-  .qty{ display:flex; gap:6px; align-items:center }
-  .small-btn{ background:transparent; border:1px solid rgba(255,255,255,0.06); padding:6px 8px; border-radius:8px; cursor:pointer; color:var(--muted) }
-  .meta{ font-size:13px; color:var(--muted) }
-
-  .extras{ display:flex; gap:8px; flex-direction:column }
-  .input, textarea, select{ width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:transparent; color:inherit; font-size:14px }
-
-  .total-row{ display:flex; justify-content:space-between; align-items:center; font-weight:800; font-size:18px; padding-top:6px }
-  .final-btn{ width:100%; padding:12px; border:none; border-radius:10px; background:linear-gradient(90deg,var(--accent),var(--accent-2)); font-weight:900; font-size:16px; cursor:pointer; color:#111; display:none }
-
-  /* print preview modal */
-  .preview-modal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; padding:20px; z-index:60 }
-  .preview-box{ background:#fff; color:#111; max-width:700px; width:100%; border-radius:10px; padding:16px }
-
-  @media (max-width:980px){
-    .cart{ height:auto }
-    .panel{ padding-bottom:12px }
-  }
+  body { font-family: Arial, sans-serif; background:#111; color:#fff; margin:0; padding:0; display:flex; flex-direction:column; height:100vh; }
+  #chat { flex:1; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:6px; }
+  .msg-bot, .msg-user { margin:6px 0; padding:8px 12px; border-radius:8px; max-width:90%; word-wrap:break-word; }
+  .msg-bot { background:#222; align-self:flex-start; }
+  .msg-user { background:#444; align-self:flex-end; }
+  button { cursor:pointer; border:none; border-radius:5px; padding:6px 12px; margin:3px; }
+  .cat-btn { background:#ff6a00; color:#fff; font-weight:bold; }
+  .item-btn { background:#333; color:#fff; margin-top:4px; display:block; width:100%; text-align:left; }
+  #inputArea { display:flex; padding:10px; background:#222; }
+  #msgBox { flex:1; padding:6px; border-radius:5px; border:none; margin-right:5px; background:#333; color:#fff; }
+  #cartBox { background:#1a1a1a; padding:10px; border-radius:8px; margin:5px; }
+  .cart-item { display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; }
+  .small-btn { padding:2px 6px; font-size:12px; background:#555; color:#fff; border-radius:3px; margin-left:2px; }
 </style>
 </head>
 <body>
 
-<header>
-  <div class="logo">
-    <img src="logo.png" id="logoImg" alt="logo"
-      onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2256%22 height=%2256%22><rect width=%2256%22 height=%2256%22 fill=%22%23ffffff%22/><text x=%2228%22 y=%2232%22 font-size=%2216%22 text-anchor=%22middle%22 fill=%22%23ff6a00%22 font-family=%22Arial%22>LOGO</text></svg>'">
-  </div>
+<div id="chat"></div>
 
-  <div>
-    <div class="title">Churrasco do Chefe</div>
-    <div class="subtitle meta">Atendimento automático — toque pra pedir</div>
-  </div>
-
-  <div class="top-controls" role="toolbar" aria-label="Controles">
-    <button class="icon-btn" id="themeToggle" title="Alternar tema">🌗</button>
-    <button class="icon-btn" id="printBtn" title="Visualizar/Imprimir pedido">🖨️</button>
-  </div>
-</header>
-
-<main class="container" role="main">
-  <!-- painel principal / bot -->
-  <section class="panel" aria-label="Atendimento">
-    <div id="chat" class="fade-msg" aria-live="polite">
-      <!-- mensagens iniciais geradas por JS -->
-    </div>
-
-    <div id="categoria" aria-label="Categorias"></div>
-
-    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px">
-      <input id="logoInput" type="file" accept="image/*" style="display:none" />
-      <button class="cat-btn" onclick="document.getElementById('logoInput').click()">📁 Subir Logo</button>
-      <button class="cat-btn" onclick="clearCart()">♻️ Limpar carrinho</button>
-      <button class="cat-btn" onclick="showPreview()">👀 Visualizar Pedido</button>
-    </div>
-
-    <div id="typing" aria-hidden="true"></div>
-
-    <div class="chat-input" role="form" aria-label="Enviar mensagem">
-      <input id="msgBox" placeholder="Escreva: 'contra filé' ou 'menu'..." autocomplete="off" aria-label="Mensagem" />
-      <button id="sendBtn" onclick="enviarMsg()">Enviar</button>
-    </div>
-  </section>
-
-  <!-- sidebar carrinho -->
-  <aside class="cart" aria-label="Carrinho">
-    <h3>Seu Pedido</h3>
-
-    <div class="cart-list" id="cartList" aria-live="polite"></div>
-
-    <div class="extras">
-      <label class="meta">Opção de entrega</label>
-      <select id="bairroSelect" class="input">
-        <option value="Parque Paranhos|0">Parque Paranhos (Magé) — R$0</option>
-        <option value="Centro Magé|8">Centro Magé — R$8</option>
-        <option value="Ponta Negra|12">Ponta Negra — R$12</option>
-        <option value="Outros|20">Outros — R$20</option>
-      </select>
-
-      <label class="meta">Observações</label>
-      <textarea id="obs" rows="2" placeholder="Ex: sem pimenta, corte fino..." class="input"></textarea>
-
-      <div style="display:flex; gap:8px; align-items:center">
-        
-      </div>
-    </div>
-
-    <div class="total-row">
-      <div class="meta">Total (itens)</div>
-      <div id="subtotalText">R$ 0.00</div>
-    </div>
-
-    <div class="total-row">
-      <div class="meta">Entrega</div>
-      <div id="freteText">R$ 0.00</div>
-    </div>
-
-    <div class="total-row" style="font-size:20px; padding-top:6px">
-      <div>Total</div>
-      <div id="grandTotal" style="color:var(--accent)">R$ 0.00</div>
-    </div>
-
-    <div style="display:flex; gap:8px; margin-top:6px">
-      <button id="finalizarBtn" class="final-btn" aria-label="Finalizar pedido e enviar por WhatsApp">Finalizar (WhatsApp)</button>
-    </div>
-
-    <div style="margin-top:8px; font-size:12px; color:var(--muted)">
-      WhatsApp: <b>+55 21 98700-1907</b>
-    </div>
-  </aside>
-</main>
-
-<!-- Preview modal -->
-<div id="previewModal" class="preview-modal" role="dialog" aria-hidden="true">
-  <div class="preview-box">
-    <div style="display:flex; justify-content:space-between; align-items:center">
-      <h3>Visualizar pedido</h3>
-      <div>
-        <button class="small-btn" onclick="closePreview()">Fechar</button>
-      </div>
-    </div>
-    <div id="previewContent" style="margin-top:12px; max-height:60vh; overflow:auto"></div>
-    <div style="display:flex; gap:8px; margin-top:12px">
-      <button class="small-btn" onclick="printOrder()" style="background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#111; border:none">Imprimir</button>
-      <button class="small-btn" onclick="copyOrder()">Copiar texto</button>
-    </div>
-  </div>
+<div id="cartBox">
+  <strong>Carrinho:</strong>
+  <div id="cartList">Vazio</div>
+  <div id="subtotalText">Subtotal: R$0,00</div>
 </div>
 
-<!-- ====== SCRIPTS (tudo integrado) ====== -->
+<div id="inputArea">
+  <input type="text" id="msgBox" placeholder="Digite aqui..." />
+  <button id="sendBtn">Enviar</button>
+</div>
+
 <script>
-/* ================= CONFIGURAÇÃO E DADOS ================= */
-const WA_NUMBER = "5521987001907"; // número do estabelecimento (padrão)
+const WA_NUMBER = "5521987001907"; // número do WhatsApp do estabelecimento
 const PRODUCTS = {
-  "Espetos": {
-    "Contra filé": 12,
-    "Carne com bacon": 10,
-    "Medalhão de carne": 12,
-    "Linguiça Toscana": 8,
-    "Linguiça de frango": 8,
-    "Linguiça mineira": 8,
-    "Tulipa": 10,
-    "Drumet": 10,
-    "Coração": 12,
-    "Medalhão de frango": 12,
-    "Queijo coalho": 12,
-    "Pão de alho": 8
-  },
-  "Frangos": {
-    "Frango assado na brasa + molho + farofa": 25,
-    "Frango na brasa + arroz + farofa + vinagrete + feijão tropeiro": 40,
-    "Frango assado + linguiça Toscana + arroz + farofa + molho + feijão tropeiro + salpicão": 60
-  },
-  "Churrascos mistos": {
-    "Churrasco misto": 50,
-    "Churrasco misto + arroz + farofa + molho": 70,
-    "Churrasco misto + arroz + feijão tropeiro + molho": 80
-  },
-  "Guarnições": {
-    "Arroz":15,
-    "Feijão tropeiro":25,
-    "Salpicão":25,
-    "Farofa":10,
-    "Vinagrete":7
-  }
+  "Espetos": { "Contra filé":12,"Carne com bacon":10,"Medalhão de carne":12,"Linguiça Toscana":8,"Linguiça de frango":8,"Linguiça mineira":8,"Tulipa":10,"Drumet":10,"Coração":12,"Medalhão de frango":12,"Queijo coalho":12,"Pão de alho":8 },
+  "Frangos": { "Frango assado na brasa + molho + farofa":25,"Frango na brasa + arroz + farofa + vinagrete + feijão tropeiro":40,"Frango assado + linguiça Toscana + arroz + farofa + molho + feijão tropeiro + salpicão":60 },
+  "Churrascos mistos": { "Churrasco misto":50,"Churrasco misto + arroz + farofa + molho":70,"Churrasco misto + arroz + feijão tropeiro + molho":80 },
+  "Guarnições": { "Arroz":15,"Feijão tropeiro":25,"Salpicão":25,"Farofa":10,"Vinagrete":7 }
 };
 
-/* ================= ESTADO ================= */
-let cart = {}; // chave: nome -> {name, price, qty}
-let enderecoLocal = "";
-let enderecoNumero = "";
-let clienteNome = "";
-let clienteTelefone = "";
-let prontoParaFinalizar = false;
-let geo = null; // {lat, lng, label}
-
-/* ================= ELEMENTOS ================= */
+let cart = {};
 const chatEl = document.getElementById('chat');
-const typingEl = document.getElementById('typing');
 const msgBox = document.getElementById('msgBox');
-const categoriaEl = document.getElementById('categoria');
+const sendBtn = document.getElementById('sendBtn');
 const cartListEl = document.getElementById('cartList');
 const subtotalText = document.getElementById('subtotalText');
-const freteText = document.getElementById('freteText');
-const grandTotalEl = document.getElementById('grandTotal');
-const bairroSelect = document.getElementById('bairroSelect');
-const obsInput = document.getElementById('obs');
-const geoBtn = document.getElementById('geoBtn');
-const geoStatus = document.getElementById('geoStatus');
-const finalizarBtn = document.getElementById('finalizarBtn');
-const previewModal = document.getElementById('previewModal');
-const previewContent = document.getElementById('previewContent');
-const previewClose = document.getElementById('previewModal');
 
-/* ================= SONS ================= */
-const clickSound = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_6bb8897e98.mp3?filename=click-124467.mp3");
-clickSound.volume = 0.18;
-function playClick(){ clickSound.currentTime = 0; clickSound.play().catch(()=>{}); }
+function formatBR(v){ return v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+function addMsgBot(html){ const div=document.createElement('div'); div.className='msg-bot'; div.innerHTML=html; chatEl.appendChild(div); chatEl.scrollTop=chatEl.scrollHeight; }
+function addMsgUser(text){ const div=document.createElement('div'); div.className='msg-user'; div.innerText=text; chatEl.appendChild(div); chatEl.scrollTop=chatEl.scrollHeight; }
 
-/* ================= UTIL ================= */
-function formatBR(v){ return v.toLocaleString('pt-BR', {style:'currency', currency:'BRL'}); }
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g, (m)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-function saveCart(){ try{ localStorage.setItem('churrasco_cart', JSON.stringify(cart)); }catch(e){} }
-function loadCart(){ try{ const s = localStorage.getItem('churrasco_cart'); if(s) cart = JSON.parse(s); }catch(e){} }
-
-/* ================= CHAT UI (bot + typing) ================= */
-function botDigitando(){ typingEl.innerHTML = `<div class="typing fade-msg"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`; }
-function botParar(){ typingEl.innerHTML = ''; }
-
-function addMsgBot(text, delay=700){
-  botDigitando();
-  setTimeout(()=> {
-    botParar();
-    const line = document.createElement('div');
-    line.className = 'bot-line fade-msg';
-    line.innerHTML = `<div class="bot-avatar">C</div><div class="msg-bot">${escapeHtml(text).replace(/\n/g,'<br>')}</div>`;
-    chatEl.appendChild(line);
-    chatEl.scrollTop = chatEl.scrollHeight;
-    playClick();
-  }, delay);
-}
-
-function addMsgUser(text){
-  const div = document.createElement('div');
-  div.className = 'msg-user fade-msg';
-  div.innerText = text;
-  chatEl.appendChild(div);
-  chatEl.scrollTop = chatEl.scrollHeight;
-  playClick();
-}
-
-/* ================= CATEGORIAS E ITENS ================= */
 function renderCategories(){
-  categoriaEl.innerHTML = '';
-  Object.keys(PRODUCTS).forEach(cat => {
+  chatEl.querySelectorAll('.cat-btn, .item-btn').forEach(b=>b.remove());
+  addMsgBot('<b>🍖 Cardápio:</b>');
+  Object.keys(PRODUCTS).forEach(cat=>{
     const btn = document.createElement('button');
-    btn.className = 'cat-btn';
-    btn.innerText = cat;
-    btn.onclick = ()=> renderItems(cat);
-    categoriaEl.appendChild(btn);
+    btn.className='cat-btn';
+    btn.innerText=cat;
+    btn.onclick=()=>showItems(cat);
+    chatEl.appendChild(btn);
   });
 }
-function renderItems(cat){
-  const box = document.createElement('div');
-  box.className = 'msg-bot fade-msg';
-  let html = `<b>${cat}</b><div style="margin-top:8px">`;
+
+function showItems(cat){
+  chatEl.querySelectorAll('.cat-btn, .item-btn').forEach(b=>b.remove());
+  addMsgBot(`<b>${cat}:</b>`);
   Object.entries(PRODUCTS[cat]).forEach(([name,price])=>{
-    const safe = name.replace(/'/g,"\\'").replace(/"/g,'\\"');
-    html += `<button class="item-btn" onclick="addToCart('${safe}',${price})">${name} — ${formatBR(price)}</button>`;
+    const btn=document.createElement('button');
+    btn.className='item-btn';
+    btn.innerText=`${name} — ${formatBR(price)}`;
+    btn.onclick=()=> {
+      addToCart(name, price);
+      btn.remove(); // some o botão após adicionar
+      addMsgBot("Digite 'finalizar' ou 'menu' para adicionar mais itens.");
+    };
+    chatEl.appendChild(btn);
   });
-  html += `</div>`;
-  box.innerHTML = html;
-  chatEl.appendChild(box);
-  chatEl.scrollTop = chatEl.scrollHeight;
 }
 
-/* ================= CARRINHO ================= */
-function addToCart(name, price){
-  if(cart[name]) cart[name].qty++;
-  else cart[name] = { name, price, qty: 1 };
-  renderCart();
-  addMsgBot(`Adicionado: ${name} — ${formatBR(price)}`, 350);
-}
-function changeQty(name, delta){
-  if(!cart[name]) return;
-  cart[name].qty += delta;
-  if(cart[name].qty <= 0) delete cart[name];
-  renderCart();
-}
-function removeItem(name){
-  delete cart[name];
-  renderCart();
-}
-function clearCart(){
-  if(confirm('Deseja realmente limpar o carrinho?')){ cart = {}; renderCart(); }
-}
 function renderCart(){
-  cartListEl.innerHTML = '';
-  let subtotal = 0;
-  const keys = Object.keys(cart);
-  if(keys.length === 0){
-    cartListEl.innerHTML = `<div style="color:var(--muted); font-size:13px">Carrinho vazio — adicione itens pelo chat ou clicando no cardápio.</div>`;
-  } else {
-    keys.forEach(k=>{
-      const it = cart[k];
-      subtotal += it.price * it.qty;
-      const row = document.createElement('div');
-      row.className = 'cart-item';
-      const safe = it.name.replace(/'/g,"\\'").replace(/"/g,'\\"');
-      row.innerHTML = `
-        <div style="flex:1">
-          <div style="font-weight:700">${escapeHtml(it.name)}</div>
-          <div class="meta">${formatBR(it.price)} x ${it.qty} = ${formatBR(it.price*it.qty)}</div>
-        </div>
-        <div style="display:flex;flex-direction:column; gap:6px; align-items:flex-end">
-          <div class="qty" role="group" aria-label="Quantidade">
-            <button class="small-btn" aria-label="Diminuir" onclick="changeQty('${safe}', -1)">-</button>
-            <div style="min-width:28px; text-align:center">${it.qty}</div>
-            <button class="small-btn" aria-label="Aumentar" onclick="changeQty('${safe}', 1)">+</button>
-          </div>
-          <div><button class="small-btn" aria-label="Remover" onclick="removeItem('${safe}')">Remover</button></div>
-        </div>
-      `;
-      cartListEl.appendChild(row);
-    });
-  }
-
-  // frete do select
-  const selected = (bairroSelect.value || '').split('|');
-  const frete = parseFloat(selected[1]||0) || 0;
-  subtotalText.innerText = `R$ ${subtotal.toFixed(2)}`;
-  freteText.innerText = `R$ ${frete.toFixed(2)}`;
-  grandTotalEl.innerText = `R$ ${(subtotal+frete).toFixed(2)}`;
-
-  // persist
-  saveCart();
-}
-
-/* ================= FLUXO AUTOMÁTICO (ENDEREÇO / NOME / TELEFONE) ================= */
-let aguardandoLocal = false;
-let aguardandoNumero = false;
-let aguardandoNome = false;
-let aguardandoTelefone = false;
-
-function perguntarLocal(){
-  aguardandoLocal = true;
-  addMsgBot("📍 Onde será a entrega? Informe rua, bairro ou ponto de referência.");
-}
-function perguntarNumero(){
-  aguardandoNumero = true;
-  addMsgBot("🏠 Agora digite o número e complemento (ex: 123, Apto 101).");
-}
-function perguntarNome(){
-  aguardandoNome = true;
-  addMsgBot("👤 Qual o seu nome?");
-}
-function perguntarTelefone(){
-  aguardandoTelefone = true;
-  addMsgBot("📱 Qual o seu telefone (ex: 21 9xxxx-xxxx)?");
-}
-
-/* processa respostas livres do usuário no chat */
-function processarRespostaFluxo(text){
-  const t = text.trim();
-  if(aguardandoLocal){
-    enderecoLocal = t;
-    aguardandoLocal = false;
-    perguntarNumero();
-    return true;
-  }
-  if(aguardandoNumero){
-    enderecoNumero = t;
-    aguardandoNumero = false;
-    perguntarNome();
-    return true;
-  }
-  if(aguardandoNome){
-    clienteNome = t;
-    aguardandoNome = false;
-    perguntarTelefone();
-    return true;
-  }
-  if(aguardandoTelefone){
-    clienteTelefone = t;
-    aguardandoTelefone = false;
-    prontoParaFinalizar = true;
-    addMsgBot("✔ Pronto! Endereço e contato registrados — agora você pode finalizar o pedido.", 400);
-    finalizarBtn.style.display = 'block';
-    return true;
-  }
-  return false;
-}
-
-/* ================= LOCALIZAÇÃO GPS ================= */
-geoBtn.addEventListener('click', ()=> {
-  if(!navigator.geolocation){ alert('Geolocalização não disponível neste navegador.'); return; }
-  geoStatus.innerText = 'Solicitando...';
-  navigator.geolocation.getCurrentPosition(pos => {
-    const lat = pos.coords.latitude;
-    const lng = pos.coords.longitude;
-    geo = { lat, lng, label: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}` };
-    geoStatus.innerHTML = 'Local enviado ✔️';
-    playClick();
-  }, err => {
-    geoStatus.innerText = 'Falha ao obter localização';
-    console.warn(err);
-  }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
-});
-
-/* ================= MENSAGEM PARA WHATSAPP ================= */
-function montarTextoWhatsApp(){
-  let lines = [];
-  lines.push("🍖 *Novo Pedido - Churrasco do Chefe* 🍖");
-  lines.push("");
-  let subtotal = 0;
-  Object.values(cart).forEach(it => {
-    lines.push(`• ${it.name} — ${formatBR(it.price)} x ${it.qty} = ${formatBR(it.price*it.qty)}`);
-    subtotal += it.price * it.qty;
+  const keys=Object.keys(cart);
+  if(keys.length===0){ cartListEl.innerHTML='Vazio'; subtotalText.innerText='Subtotal: R$0,00'; return; }
+  cartListEl.innerHTML='';
+  let subtotal=0;
+  keys.forEach(k=>{
+    const it=cart[k];
+    subtotal+=it.price*it.qty;
+    const div=document.createElement('div');
+    div.className='cart-item';
+    div.innerHTML=`
+      ${it.name} x${it.qty} — ${formatBR(it.price*it.qty)}
+      <span>
+        <button class="small-btn" onclick="changeQty('${it.name}',-1)">-</button>
+        <button class="small-btn" onclick="changeQty('${it.name}',1)">+</button>
+        <button class="small-btn" onclick="removeItem('${it.name}')">Remover</button>
+      </span>
+    `;
+    cartListEl.appendChild(div);
   });
-  lines.push("");
-  const selected = (bairroSelect.value || '').split('|');
-  const bairro = selected[0] || '';
-  const frete = parseFloat(selected[1]||0) || 0;
-  lines.push(`Subtotal: ${formatBR(subtotal)}`);
-  lines.push(`Entrega (${bairro}): ${formatBR(frete)}`);
-  lines.push(`*Total: ${formatBR(subtotal+frete)}*`);
-  lines.push("");
-  if(enderecoLocal) lines.push(`📍 Local da entrega: ${enderecoLocal}`);
-  if(enderecoNumero) lines.push(`🏠 Número / Complemento: ${enderecoNumero}`);
-  if(geo && geo.label) lines.push(`📍 Link de localização: ${geo.label}`);
-  lines.push("");
-  if(clienteNome) lines.push(`👤 Nome: ${clienteNome}`);
-  if(clienteTelefone) lines.push(`📱 Telefone: ${clienteTelefone}`);
-  if(obsInput.value.trim()) lines.push(`📝 Observações: ${obsInput.value.trim()}`);
-  lines.push("");
-  lines.push("— Obrigado! Aguardo confirmação.");
-  return lines.join("\n");
+  subtotalText.innerText=`Subtotal: ${formatBR(subtotal)}`;
 }
 
-/* ================= FINALIZAR (integra WhatsApp) ================= */
-finalizarBtn.addEventListener('click', finalizeFlow);
-
-function finalizeFlow(){
-  if(Object.keys(cart).length === 0){ addMsgBot("Seu carrinho está vazio. Adicione itens antes de finalizar."); return; }
-  if(!prontoParaFinalizar){
-    // começar fluxo automático
-    addMsgBot("Antes de finalizar preciso do endereço e contato. Vou te perguntar agora.");
-    perguntarLocal();
-    return;
-  }
-
-  const texto = encodeURIComponent(montarTextoWhatsApp());
-  const url = `https://wa.me/${WA_NUMBER}?text=${texto}`;
-  addMsgBot("Abrindo WhatsApp com seu pedido…");
-  window.open(url, '_blank');
-}
-
-/* ================= COMANDOS E ENVIO DE MENSAGEM ================= */
-function findProductByText(text){
-  const t = text.trim().toLowerCase();
-  if(!t) return null;
-  for(const cat of Object.keys(PRODUCTS)){
-    for(const [name,price] of Object.entries(PRODUCTS[cat])){
-      if(name.toLowerCase().includes(t)) return { name, price };
-    }
-  }
-  return null;
-}
-
-function enviarMsg(){
-  const raw = msgBox.value.trim();
-  if(!raw) return;
-  addMsgUser(raw);
-  msgBox.value = '';
-  playClick();
-
-  // se estamos no fluxo de coleta de dados
-  if(processarRespostaFluxo(raw)) return;
-
-  const lower = raw.toLowerCase();
-
-  // palavras finalização
-  const palavrasFinalizar = ["finalizar","pronto","fechar","acabei","fechar pedido","finalizar pedido"];
-  if(palavrasFinalizar.some(p => lower.includes(p))){
-    if(prontoParaFinalizar){
-      finalizarBtn.style.display = 'block';
-      addMsgBot("Tudo certo! Clique em Finalizar Pedido para enviar via WhatsApp.", 300);
-    } else {
-      addMsgBot("Beleza — antes de finalizar, vou pegar o endereço e contato com você.", 300);
-      perguntarLocal();
-    }
-    return;
-  }
-
-  // comandos
-  if(lower === 'menu' || lower === 'cardapio' || lower === 'cardápio'){
-    showMenu(); return;
-  }
-  if(lower === 'carrinho' || lower === 'mostrar carrinho'){
-    renderCart(); addMsgBot("Aqui está seu carrinho."); return;
-  }
-  if(lower.startsWith('remover ')){
-    const what = raw.substring(8).trim();
-    if(cart[what]){ removeItem(what); addMsgBot(`Removido ${what}`); } else addMsgBot(`Não encontrei ${what} no carrinho.`);
-    return;
-  }
-
-  // tentar encontrar produto pelo texto
-  const found = findProductByText(raw);
-  if(found){
-    addToCart(found.name, found.price);
-    return;
-  }
-
-  // fallback
-  addMsgBot("Não entendi. Escreva o nome do produto (ex: 'contra filé'), ou 'finalizar' para encerrar o pedido.");
-}
-
-/* ================= PREVIEW / IMPRIMIR / COPIAR ================= */
-function showPreview(){
-  let html = `<div><strong>Churrasco do Chefe — Pedido</strong><div class="meta">Bairro: ${escapeHtml((bairroSelect.value||'').split('|')[0]||'')}</div><hr></div>`;
-  let subtotal = 0;
-  Object.values(cart).forEach(it=>{
-    html += `<div style="display:flex;justify-content:space-between;margin-bottom:6px"><div>${escapeHtml(it.name)} x ${it.qty}</div><div>${formatBR(it.price*it.qty)}</div></div>`;
-    subtotal += it.price*it.qty;
-  });
-  const selected = (bairroSelect.value || '').split('|');
-  const frete = parseFloat(selected[1]||0) || 0;
-  html += `<hr><div style="display:flex;justify-content:space-between"><div>Subtotal</div><div>${formatBR(subtotal)}</div></div>`;
-  html += `<div style="display:flex;justify-content:space-between"><div>Entrega</div><div>${formatBR(frete)}</div></div>`;
-  html += `<div style="display:flex;justify-content:space-between;font-weight:800;margin-top:8px"><div>Total</div><div>${formatBR(subtotal+frete)}</div></div>`;
-  if(enderecoLocal) html += `<hr><div><strong>Endereço:</strong><div>${escapeHtml(enderecoLocal)} — ${escapeHtml(enderecoNumero||'')}</div></div>`;
-  if(clienteNome) html += `<div><strong>Nome:</strong> ${escapeHtml(clienteNome)}</div>`;
-  if(clienteTelefone) html += `<div><strong>Telefone:</strong> ${escapeHtml(clienteTelefone)}</div>`;
-  if(obsInput.value.trim()) html += `<hr><div><strong>Observações:</strong><div>${escapeHtml(obsInput.value)}</div></div>`;
-  previewContent.innerHTML = html;
-  previewModal.style.display = 'flex';
-}
-function closePreview(){ previewModal.style.display = 'none'; }
-function printOrder(){
-  const selected = (bairroSelect.value || '').split('|');
-  const bairro = selected[0] || '';
-  const frete = parseFloat(selected[1]||0) || 0;
-  let subtotal = 0;
-  let html = `<html><head><title>Pedido</title><style>body{font-family:Arial;padding:20px}</style></head><body>`;
-  html += `<h2>Churrasco do Chefe — Pedido</h2>`;
-  html += `<div>Bairro: ${escapeHtml(bairro)}</div><hr>`;
-  Object.values(cart).forEach(it=>{
-    html += `<div style="display:flex;justify-content:space-between;margin-bottom:6px"><div>${escapeHtml(it.name)} x ${it.qty}</div><div>${formatBR(it.price*it.qty)}</div></div>`;
-    subtotal += it.price*it.qty;
-  });
-  html += `<hr><div style="display:flex;justify-content:space-between"><div>Subtotal</div><div>${formatBR(subtotal)}</div></div>`;
-  html += `<div style="display:flex;justify-content:space-between"><div>Entrega</div><div>${formatBR(frete)}</div></div>`;
-  html += `<div style="display:flex;justify-content:space-between;font-weight:800;margin-top:8px"><div>Total</div><div>${formatBR(subtotal+frete)}</div></div>`;
-  if(obsInput.value) html += `<hr><div><strong>Observações:</strong><div>${escapeHtml(obsInput.value)}</div></div>`;
-  html += `</body></html>`;
-  const w = window.open('','_blank');
-  w.document.write(html); w.document.close(); w.print();
-}
-function copyOrder(){
-  const selected = (bairroSelect.value || '').split('|');
-  const bairro = selected[0] || '';
-  const frete = parseFloat(selected[1]||0) || 0;
-  let lines = [];
-  lines.push("Novo Pedido - Churrasco do Chefe");
-  let subtotal = 0;
-  Object.values(cart).forEach(it=>{
-    lines.push(`${it.name} x ${it.qty} — ${formatBR(it.price*it.qty)}`);
-    subtotal += it.price*it.qty;
-  });
-  lines.push(`Subtotal: ${formatBR(subtotal)}`);
-  lines.push(`Entrega (${bairro}): ${formatBR(frete)}`);
-  lines.push(`Total: ${formatBR(subtotal+frete)}`);
-  if(obsInput.value) lines.push(`Observações: ${obsInput.value}`);
-  navigator.clipboard.writeText(lines.join('\n')).then(()=> alert('Pedido copiado para área de transferência')).catch(()=> alert('Não foi possível copiar automaticamente.'));
-}
-
-/* ================= TECLA ENTER e INICIALIZAÇÃO ================= */
-document.getElementById('sendBtn').addEventListener('click', enviarMsg);
-msgBox.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); enviarMsg(); } });
-
-/* theme toggle */
-const themeToggle = document.getElementById('themeToggle');
-themeToggle.onclick = ()=> {
-  const cur = document.documentElement.getAttribute('data-theme');
-  if(cur === 'light'){ document.documentElement.removeAttribute('data-theme'); localStorage.setItem('theme','dark'); themeToggle.innerText = '🌗'; }
-  else { document.documentElement.setAttribute('data-theme','light'); localStorage.setItem('theme','light'); themeToggle.innerText = '🌞'; }
-};
-if(localStorage.getItem('theme') === 'light'){ document.documentElement.setAttribute('data-theme','light'); themeToggle.innerText = '🌞'; }
-
-/* upload logo */
-document.getElementById('logoInput').addEventListener('change', function(e){
-  const file = this.files[0]; if(!file) return;
-  const url = URL.createObjectURL(file); document.getElementById('logoImg').src = url;
-});
-
-/* iniciar */
-(function init(){
-  renderCategories();
-  loadCart();
+function addToCart(name,price){
+  if(cart[name]) cart[name].qty++; else cart[name]={name,price,qty:1};
+  addMsgBot(`✅ Adicionado: ${name} — ${formatBR(price)}`);
   renderCart();
-  addMsgBot("🔥 Olá! Eu sou o assistente do Churrasco do Chefe. Escreva o nome do produto para adicionar ou 'menu' para ver o cardápio.", 400);
-  finalizarBtn.style.display = 'none';
-})();
-
-/* ================= MANIFEST E SERVICE WORKER (SUGESTÕES) ================= */
-/*
-manifest.json (salvar ao lado do index.html)
-{
-  "short_name":"Churrasco",
-  "name":"Churrasco do Chefe - Atendimento",
-  "icons":[{"src":"logo.png","sizes":"192x192","type":"image/png"}],
-  "start_url":".",
-  "display":"standalone",
-  "theme_color":"#ff6a00",
-  "background_color":"#111111"
 }
 
-sw.js (salvar ao lado)
-self.addEventListener('install', e => { self.skipWaiting(); });
-self.addEventListener('fetch', ()=>{});
-*/
+function changeQty(name,delta){
+  if(!cart[name]) return;
+  cart[name].qty+=delta;
+  if(cart[name].qty<=0) delete cart[name];
+  renderCart();
+}
 
+function removeItem(name){ if(cart[name]){ delete cart[name]; renderCart(); addMsgBot(`❌ Removido: ${name}`); } }
+
+function montarTextoWhatsApp(){
+  let text="🍖 Novo Pedido 🍖\n";
+  Object.values(cart).forEach(it=> text+=`• ${it.name} x${it.qty} — ${formatBR(it.price*it.qty)}\n`);
+  let total=Object.values(cart).reduce((a,b)=>a+b.price*b.qty,0);
+  text+=`Total: ${formatBR(total)}`;
+  return encodeURIComponent(text);
+}
+
+function processInput(text){
+  const lower=text.toLowerCase();
+  addMsgUser(text);
+
+  if(lower==='menu' || lower==='cardapio' || lower==='cardápio'){ renderCategories(); return; }
+  if(lower==='finalizar'){
+    if(Object.keys(cart).length===0){ addMsgBot("Carrinho vazio!"); return; }
+    const url=`https://wa.me/${WA_NUMBER}?text=${montarTextoWhatsApp()}`;
+    window.open(url,'_blank');
+    return;
+  }
+  if(lower.startsWith('remover ')){ removeItem(text.substring(8).trim()); return; }
+
+  for(const cat in PRODUCTS){
+    for(const [name,price] of Object.entries(PRODUCTS[cat])){
+      if(name.toLowerCase()===lower){ addToCart(name,price); addMsgBot("Digite 'finalizar' ou 'menu' para adicionar mais itens."); return; }
+    }
+  }
+  addMsgBot("Não entendi. Digite o nome do produto ou 'menu' para ver o cardápio.");
+}
+
+sendBtn.onclick=()=>{ const t=msgBox.value.trim(); if(t){ processInput(t); msgBox.value=''; } }
+msgBox.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); sendBtn.click(); } });
+
+addMsgBot("🔥 Olá! Sou o assistente do Churrasco do Chefe. Digite 'menu' para ver o cardápio.");
+renderCart();
 </script>
+
 </body>
 </html>
